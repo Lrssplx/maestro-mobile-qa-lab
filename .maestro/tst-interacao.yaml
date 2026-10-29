@@ -1,0 +1,16 @@
+
+appId: com.android.settings
+name: MOB-002 - Navegar nas configurações
+---
+- launchApp
+
+- assertVisible: "Config."
+
+- scrollUntilVisible:
+    element:
+      text: "Sobre o telefone"
+    direction: DOWN
+
+- tapOn: "Sobre o telefone"
+
+- assertVisible: "Informações do software"

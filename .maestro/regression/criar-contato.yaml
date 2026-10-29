@@ -1,0 +1,75 @@
+# Fluxo de criação de contato. Exemplos comentados são alternativas, não etapas executadas.
+# Referência: https://docs.maestro.dev/reference/commands-available/
+appId: com.samsung.android.app.contacts # Pacote Android do app; no iOS, use o bundle ID.
+name: MOB-003 - Criar contato # Nome do teste nos relatórios; pode ser alterado sem mudar as ações.
+--- # Separa a configuração acima da lista de comandos abaixo.
+
+# launchApp: abre o app definido em appId; por padrão, reinicia o app antes de abrir.
+# Variação: - launchApp: { appId: "com.exemplo.app" } abre outro pacote.
+# Variação: - launchApp: { stopApp: false } traz o app ao primeiro plano sem reiniciar.
+# Variação: - launchApp: { clearState: true } limpa os dados do app antes de abrir.
+# Outras opções: permissions (mapa de permissões), arguments (argumentos de inicialização)
+# e clearKeychain: true (limpa todo o Keychain no iOS). São alternativas, não usadas aqui.
+- launchApp # Abre o aplicativo de Contatos sem solicitar limpeza de dados.
+
+# tapOn: toca no elemento encontrado pelo seletor.
+# Variações de alvo: - tapOn: "Texto" ou - tapOn: { text: "Texto" }.
+# Por ID: - tapOn: { id: "pacote:id/campo" }; text e id aceitam expressões regulares.
+# Por posição: - tapOn: { point: "50%,50%" } ou { point: "100,200" } em pixels.
+# Para desempatar: index: 0 seleciona a primeira ocorrência (índice começa em zero).
+# Outras opções: optional: true tolera ausência; repeat: 2 e delay: 100 repetem o toque.
+# Comandos relacionados: doubleTapOn (toque duplo) e longPressOn (toque prolongado).
+- tapOn: # Abre o formulário de cadastro.
+    id: "com.samsung.android.app.contacts:id/menu_create_contact" # ID do botão de criar contato.
+
+# runFlow: executa um subfluxo inline ou um arquivo externo.
+# Variação curta: - runFlow: "subfluxo.yaml".
+# Variação expandida: - runFlow: { file: "subfluxo.yaml", env: { CHAVE: "valor" } }.
+# Use commands para passos inline ou file para arquivo; label nomeia a etapa no relatório.
+- runFlow: # Executa a seleção de armazenamento somente quando ela for solicitada.
+    when: # Condiciona a execução; sem when, o subfluxo é executado sempre.
+      visible: "Salvar contatos no" # Executa quando o texto está visível; aceita seletor { id: "..." }.
+      # Variações de condição: notVisible: "Texto" ou true: ${expressaoJavaScript}.
+    commands: # Lista de passos inline; a alternativa é file no nível de runFlow.
+      - tapOn: # Seleciona o armazenamento local no menu aberto.
+          id: "android:id/text1" # Restringe o alvo ao ID dos itens desse menu.
+          text: "Telefone" # Combina texto E ID para escolher o item correto.
+
+- tapOn: # Coloca o foco no campo de nome.
+    id: "com.samsung.android.app.contacts:id/nameEdit" # ID específico do campo editável de nome.
+# inputText: insere texto; selecione primeiro o campo desejado com tapOn.
+# Variação com variável: - inputText: ${NOME_CONTATO}.
+# Variação expandida: - inputText: { text: "Exemplo", label: "Preencher nome" }.
+# Para substituir conteúdo existente, execute eraseText antes de inputText.
+# Comandos relacionados: inputRandomPersonName, inputRandomEmail, inputRandomNumber e inputRandomText.
+- inputText: "Cinthia C" # Digita o nome no campo que recebeu foco.
+
+- tapOn: # Ativa a linha de telefone abaixo do nome.
+    id: "com.samsung.android.app.contacts:id/titleText" # Evita selecionar o armazenamento no topo.
+    text: "Telefone" # Distingue a linha de telefone das linhas E-mail e Grupos com o mesmo ID.
+- inputText: "83989876654" # Insere o telefone; mantenha aspas para preservar o valor como texto.
+# hideKeyboard não precisa de parâmetros; oculta o teclado quando visível.
+# Alternativa no Android: back; pode navegar para trás se o teclado já estiver fechado.
+# Outra alternativa depende do app: tapOn em uma área que dispense o teclado.
+- hideKeyboard # Libera a área da tela antes de validar e salvar.
+
+# assertVisible: verifica visibilidade e aguarda automaticamente por um período limitado.
+# Variação por texto: - assertVisible: "Texto"; por regex: - assertVisible: ".*Texto.*".
+# Variação por ID: - assertVisible: { id: "pacote:id/campo" }.
+# Variação combinada: - assertVisible: { text: "Texto", enabled: true }.
+# Outros filtros: checked, focused e selected; combine conforme o estado esperado.
+# Comando relacionado: assertNotVisible verifica ausência.
+# Para espera maior: - extendedWaitUntil: { visible: "Texto", timeout: 15000 } (milissegundos).
+- assertVisible: ".*83.*989876654.*" # Confirma o número no formulário; .* aceita caracteres intermediários.
+
+- tapOn: # Salva o contato preenchido.
+    id: "com.samsung.android.app.contacts:id/menu_done" # ID real do botão Salvar observado na hierarquia.
+
+- assertVisible: "Cinthia C" # Confirma que o nome aparece após salvar; aceita também seletor por ID.
+- assertVisible: ".*83.*989876654.*" # Confirma que o telefone aparece após salvar; usa regex como acima.
+
+# takeScreenshot: registra uma imagem PNG da tela atual.
+# Variação expandida: - takeScreenshot: { path: "contato-criado", label: "Contato salvo" }.
+# Variação com subpasta: - takeScreenshot: "contatos/criado" (sem extensão).
+# Variação com recorte: - takeScreenshot: { path: "nome", cropOn: { id: "pacote:id/nome" } }.
+- takeScreenshot: contato-criado # Nome da evidência; a pasta final depende da configuração de saída.

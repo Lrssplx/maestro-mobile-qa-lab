@@ -1,0 +1,7 @@
+
+appId: com.android.settings
+name: MOB-001 - Abrir configurações
+---
+- launchApp
+
+- assertVisible: "Config."
